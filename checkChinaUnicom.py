@@ -1,5 +1,5 @@
 #!/bin/env python3
-#coding:utf-8
+# -*- coding:utf-8 -*-
 
 import requests
 import os, time, random, datetime
