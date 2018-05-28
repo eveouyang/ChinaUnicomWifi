@@ -41,15 +41,15 @@ class ChinaUnicom():
         try:
             url_request = requests.get(url,headers=headers)
             # self.test()
-            # print('[ %s ] request:%s, Auth finally\n' % (check_time, url_request))
-            logging.INFO('request: %s, Auth finish.\n')
+            request_status_code = url_request.status_code
+            logging.info('request: %d, Auth finish.\n' % request_status_code)
         except requests.exceptions.ConnectionError as err:
             # print('[ %s ] requests.exceptions.ConnectionError\n' % check_time)
-            logging.ERROR('requests.exceptions.ConnectionError, reconnect the wifi\n')
+            logging.error('requests.exceptions.ConnectionError, reconnect the wifi\n')
             os.system('nmcli connection down ChinaUnicom')
             os.system('nmcli connection up ChinaUnicom')
         except Exception as err:
-            logging.ERROR('login exception\n%s\n' % err)
+            logging.error('login exception\n%s\n' % err)
             # print('[ %s ] login exception\n%s\n' % (check_time, err))
 
     def login_test(self):
@@ -74,32 +74,31 @@ class ChinaUnicom():
                     self.status = True
                 if not self.status:
                     # print('[ %s ] Auth fail, try to reconnect the internet.\n' % check_time)
-                    logging.WARNING('Auth fail, try to reconnect the internet.\n')
+                    logging.warning('Auth fail, try to reconnect the internet.\n')
                     self.login()
 
                 ping_test = os.system('ping %s -c 3 > /dev/null' % ping_url)
                 if ping_test != 0:
                     # print('[ %s ] ping fail, reconnect the wifi\n' % check_time)
-                    logging.WARNING('Ping fail, reconnect the wifi\n')
+                    logging.warning('Ping fail, reconnect the wifi\n')
                     os.system('nmcli connection down ChinaUnicom')
                     os.system('nmcli connection up ChinaUnicom')
             except requests.exceptions.ConnectionError as err:
                 # print('[ %s ] requests.exceptions.ConnectionError\n' % check_time)
-                logging.ERROR('requests.exceptions.ConnectionError, reconnect the wifi\n')
+                logging.error('requests.exceptions.ConnectionError, reconnect the wifi\n')
                 os.system('nmcli connection down ChinaUnicom')
                 os.system('nmcli connection up ChinaUnicom')
             except Exception as err:
                 # print('[ %s ] Exception\n' % check_time)
-                logging.ERROR('Exception:\n' % err)
+                logging.error('Exception:\n' % err)
 
             time.sleep(round(random.uniform(3,8)))
 
-        def log_setting(self):
-            check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            FORMAT = '[ %(asctime)-15s ] %(levelname)s: %(message)s'
-            LOG_FILE = '/tmp/ChinaUnicom_wifi_.log'
-            logging.getLogger('log').setLevel(logging.INFO)
-            logging.basicConfig(format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILE)
+    def log_setting(self):
+        check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        FORMAT = '[ %(asctime)-15s ] %(levelname)s: %(message)s'
+        LOG_FILE = '/tmp/ChinaUnicom_wifi_%s.log' % datetime.datetime.now().strftime('%Y-%m-%d')
+        logging.basicConfig(format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILE, level=logging.INFO)
 
 
 if __name__ == '__main__':
