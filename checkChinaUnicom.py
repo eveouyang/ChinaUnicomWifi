@@ -40,17 +40,14 @@ class ChinaUnicom():
         check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         try:
             url_request = requests.get(url,headers=headers)
-            # self.test()
             request_status_code = url_request.status_code
             logging.info('request: %d, Auth finish.\n' % request_status_code)
         except requests.exceptions.ConnectionError as err:
-            # print('[ %s ] requests.exceptions.ConnectionError\n' % check_time)
             logging.error('requests.exceptions.ConnectionError, reconnect the wifi\n')
             os.system('nmcli connection down ChinaUnicom')
             os.system('nmcli connection up ChinaUnicom')
         except Exception as err:
             logging.error('login exception\n%s\n' % err)
-            # print('[ %s ] login exception\n%s\n' % (check_time, err))
 
     def login_test(self):
         '''
@@ -73,23 +70,19 @@ class ChinaUnicom():
                 else:
                     self.status = True
                 if not self.status:
-                    # print('[ %s ] Auth fail, try to reconnect the internet.\n' % check_time)
                     logging.warning('Auth fail, try to reconnect the internet.\n')
                     self.login()
 
                 ping_test = os.system('ping %s -c 3 > /dev/null' % ping_url)
                 if ping_test != 0:
-                    # print('[ %s ] ping fail, reconnect the wifi\n' % check_time)
                     logging.warning('Ping fail, reconnect the wifi\n')
                     os.system('nmcli connection down ChinaUnicom')
                     os.system('nmcli connection up ChinaUnicom')
             except requests.exceptions.ConnectionError as err:
-                # print('[ %s ] requests.exceptions.ConnectionError\n' % check_time)
                 logging.error('requests.exceptions.ConnectionError, reconnect the wifi\n')
                 os.system('nmcli connection down ChinaUnicom')
                 os.system('nmcli connection up ChinaUnicom')
             except Exception as err:
-                # print('[ %s ] Exception\n' % check_time)
                 logging.error('Exception:\n' % err)
 
             time.sleep(round(random.uniform(3,8)))
