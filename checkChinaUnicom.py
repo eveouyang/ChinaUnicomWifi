@@ -2,11 +2,13 @@
 # -*- coding:utf-8 -*-
 
 import requests
-import os, time, random, datetime
+import os, random
+import time, datetime
 import logging
 import ChinaUnicomUserInfo
+import pdb
 
-class ChinaUnicom():
+class ChinaUnicom(object):
     '''
     Auto auth ChinaUnicom wifi function.
     '''
@@ -16,6 +18,7 @@ class ChinaUnicom():
         Set the default status to False
         '''
         self.status = False
+
 
     def login(self):
         '''
@@ -31,23 +34,25 @@ class ChinaUnicom():
         #!/bin/env python3
         #! -*- coding: utf-8 -*-
 
-        USERINFO = ['PHONE_NUMBER', 'PASSWORD']
+        USERINFO = ['PHONE_NUMBER', 'PASSWORD' 'LOG_PATH']
 
         '''
         username = ChinaUnicomUserInfo.USERINFO[0]
         password = ChinaUnicomUserInfo.USERINFO[1]
         url = 'http://portal.gd165.com/login.do?callback=jQuery171024185281451507334_1527222491595&username=%s&password=%s&passwordType=6&wlanuserip=&userOpenAddress=gd&checkbox=0&basname=&setUserOnline=&sap=&macAddr=&bandMacAuth=0&isMacAuth=&basPushUrl=http%%253A%%252F%%252Fportal.gd165.com%%252F&passwordkey=asiainfo&_=1527222495041' % (username,password)
-        check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         try:
-            url_request = requests.get(url,headers=headers)
+            # url_request = requests.get(url,headers=headers)
+            url_request = ""
+            with requests.get(url,headers=headers) as r:
+                url_request = r
             request_status_code = url_request.status_code
-            logging.info('request: %d, Auth finish.\n' % request_status_code)
+            logging.info('request: %d, Auth finish.' % request_status_code)
         except requests.exceptions.ConnectionError as err:
             logging.error('requests.exceptions.ConnectionError, reconnect the wifi\n')
             os.system('nmcli connection down ChinaUnicom')
             os.system('nmcli connection up ChinaUnicom')
         except Exception as err:
-            logging.error('login exception\n%s\n' % err)
+            logging.error('login exception\n%s' % err)
 
     def login_test(self):
         '''
@@ -56,46 +61,73 @@ class ChinaUnicom():
         2. Try to ping the test url. If ping fail, then try to reconnect the ChinaUnicom wifi.
         '''
         while True:
-            url_list = ['http://cn.bing.com',
+            url_list = ['http://www.qq.com',
                         'http://www.baidu.com',
-                        'http://www.mydrivers.com']
+                        'http://www.163.com']
             target_url = url_list[round(random.uniform(0,2))]
             ping_url = target_url.split('http://')[1]
-            check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            # LOG_FILE = '/home/eveblue/log/ChinaUnicom_wifi_%s.log' % datetime.datetime.now().strftime('%Y-%m-%d')
+            # FORMAT = '[ %(asctime)-15s ] %(levelname)s: %(message)s'
+            # logging.basicConfig(format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILE, level=logging.INFO)
 
             try:
-                response = requests.get(target_url)
-                if response.url.startswith('http://portal.gd165.com/'):
+                # response = requests.get(target_url, timeout=10)
+                response = ""
+                with requests.get(target_url, timeout=10) as r:
+                    response = r
+                if response.url.startswith('http://portal.gd165.com'):
                     self.status = False
                 else:
                     self.status = True
                 if not self.status:
-                    logging.warning('Auth fail, try to reconnect the internet.\n')
+                    logging.warning('Auth fail, try to reconnect the internet.')
                     self.login()
 
                 ping_test = os.system('ping %s -c 3 > /dev/null' % ping_url)
                 if ping_test != 0:
-                    logging.warning('Ping fail, reconnect the wifi\n')
+                    logging.warning('Ping %s fail, reconnect the wifi' % ping_url)
                     os.system('nmcli connection down ChinaUnicom')
                     os.system('nmcli connection up ChinaUnicom')
+                    self.login()
             except requests.exceptions.ConnectionError as err:
-                logging.error('requests.exceptions.ConnectionError, reconnect the wifi\n')
+                logging.error('%s, reconnect the wifi' % err)
                 os.system('nmcli connection down ChinaUnicom')
                 os.system('nmcli connection up ChinaUnicom')
+                self.login()
+            except requests.exceptions.ReadTimeout as err:
+                logging.error('%s, reconnect the wifi' % err)
+                os.system('nmcli connection down ChinaUnicom')
+                os.system('nmcli connection up ChinaUnicom')
+                self.login()
+            except requests.exceptions.ChunkedEncodingError as err:
+                logging.error('%s, reconnect the wifi' % err)
+                os.system('nmcli connection down ChinaUnicom')
+                os.system('nmcli connection up ChinaUnicom')
+                self.login()
+            except socket.timeout as err:
+                logging.error('%s, reconnect the wifi' % err)
+                os.system('nmcli connection down ChinaUnicom')
+                os.system('nmcli connection up ChinaUnicom')
+                self.login()
             except Exception as err:
-                logging.error('Exception:\n' % err)
-
-            time.sleep(round(random.uniform(3,8)))
+                logging.error('Exception:\n%s' % err)
+                os.system('nmcli connection down ChinaUnicom')
+                os.system('nmcli connection up ChinaUnicom')
+                self.login()
+            finally:
+                time.sleep(round(random.uniform(3,8)))
 
     def log_setting(self):
-        check_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         FORMAT = '[ %(asctime)-15s ] %(levelname)s: %(message)s'
-        LOG_FILE = '/tmp/ChinaUnicom_wifi_%s.log' % datetime.datetime.now().strftime('%Y-%m-%d')
+        LOG_PATH = ChinaUnicomUserInfo.USERINFO[2]
+        LOG_FILE = '%s/ChinaUnicom_wifi_%s.log' % (LOG_PATH, datetime.datetime.now().strftime('%Y-%m-%d'))
         logging.basicConfig(format=FORMAT, datefmt='%Y-%m-%d %H:%M:%S', filename=LOG_FILE, level=logging.INFO)
 
 
 if __name__ == '__main__':
-    connect = ChinaUnicom()
-    connect.log_setting()
-    connect.login()
-    connect.login_test()
+    ChinaUnicomWifiNumber = int(os.popen('nmcli device wifi list| grep -c "ChinaUnicom"').readlines()[0])
+    if ChinaUnicomWifiNumber > 0:
+        connect = ChinaUnicom()
+        connect.log_setting()
+        # connect.login()
+        connect.login_test()
